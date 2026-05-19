@@ -1,0 +1,146 @@
+name: Terraform CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: false # No cancelar deploys en curso
+
+env:
+  TF_VERSION: "1.7.0"
+  WORKING_DIR: "."
+  TF_SUFFIX: "a1b2"
+
+jobs:
+  validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Terraform Init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="prefix=platform/${{ env.TF_SUFFIX }}"
+
+      - name: Terraform Format Check
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform plan \
+            -var="suffix=${{ env.TF_SUFFIX }}" \
+            -var="gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="gcp_region=${{ secrets.GCP_REGION }}" \
+            -var="neon_api_key=${{ secrets.NEON_API_KEY }}" \
+            -var="alert_email=${{ secrets.ALERT_EMAIL }}" \
+            -var="cms_image=${{ secrets.CMS_IMAGE }}" \
+            -detailed-exitcode \
+            -out=tfplan
+        env:
+          TF_VAR_neon_api_key: ${{ secrets.NEON_API_KEY }}
+          TF_VAR_neon_org_id: ${{ secrets.NEON_ORG_ID }}
+
+      - name: Upload Plan
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan
+          retention-days: 1
+
+  apply:
+    name: Apply Terraform
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Terraform Init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="prefix=platform/${{ env.TF_SUFFIX }}"
+
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+
+      - name: Terraform Apply
+        working-directory: ${{ env.WORKING_DIR }}
+        id: apply
+        run: terraform apply -auto-approve tfplan
+        timeout-minutes: 15
+
+      - name: Notify on failure
+        if: failure() && steps.apply.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Terraform apply fallido. Revisando rollback automático...'
+            })
+
+      - name: Rollback on failure
+        if: failure() && steps.apply.outcome == 'failure'
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          echo "Apply fallido, iniciando rollback al último estado exitoso..."
+          # El estado de Terraform en GCS preserva el último estado exitoso.
+          # Restaurar el estado anterior y hacer plan/apply nuevamente.
+          terraform plan \
+            -var="suffix=${{ env.TF_SUFFIX }}" \
+            -var="gcp_project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="gcp_region=${{ secrets.GCP_REGION }}" \
+            -var="neon_api_key=${{ secrets.NEON_API_KEY }}" \
+            -var="alert_email=${{ secrets.ALERT_EMAIL }}" \
+            -var="cms_image=${{ secrets.CMS_IMAGE_PREVIOUS }}" \
+            -out=rollback.tfplan
+          terraform apply -auto-approve rollback.tfplan
+        env:
+          TF_VAR_neon_api_key: ${{ secrets.NEON_API_KEY }}
+          TF_VAR_neon_org_id: ${{ secrets.NEON_ORG_ID }}
+        timeout-minutes: 5

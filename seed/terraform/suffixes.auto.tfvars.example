@@ -1,0 +1,5 @@
+# Copiar a suffixes.auto.tfvars y editar al agregar bloques.
+# Agregar un sufijo solo crea el proyecto nuevo; los anteriores no cambian.
+suffixes = [
+  "a1b2",
+]
