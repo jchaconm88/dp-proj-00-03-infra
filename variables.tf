@@ -56,6 +56,34 @@ variable "cms_max_instances" {
   default     = 10
 }
 
+variable "front_image" {
+  description = "Imagen Docker del frontend Astro. Bootstrap: us-docker.pkg.dev/cloudrun/container/hello"
+  type        = string
+  default     = "us-docker.pkg.dev/cloudrun/container/hello"
+}
+
+variable "front_container_port" {
+  description = "Puerto del contenedor frontend (8080 con hello o Astro en prod)"
+  type        = number
+  default     = 8080
+}
+
+variable "front_health_check_path" {
+  description = "Health check del front (/ con hello, /api/health con Astro)"
+  type        = string
+  default     = "/"
+}
+
+variable "front_min_instances" {
+  type    = number
+  default = 0
+}
+
+variable "front_max_instances" {
+  type    = number
+  default = 10
+}
+
 variable "billing_alert_threshold_usd" {
   description = "Umbral de alerta de gasto mensual en USD"
   type        = number

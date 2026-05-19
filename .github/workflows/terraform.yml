@@ -59,6 +59,7 @@ jobs:
             -var="neon_api_key=${{ secrets.NEON_API_KEY }}" \
             -var="alert_email=${{ secrets.ALERT_EMAIL }}" \
             -var="cms_image=${{ secrets.CMS_IMAGE }}" \
+            -var="front_image=${{ secrets.FRONT_IMAGE || 'us-docker.pkg.dev/cloudrun/container/hello' }}" \
             -detailed-exitcode \
             -out=tfplan
         env:

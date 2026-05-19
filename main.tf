@@ -44,28 +44,15 @@ module "cloud_run" {
 
   gcp_project_id    = var.gcp_project_id
   gcp_region        = var.gcp_region
-  cms_image           = var.cms_image
-  container_port      = var.cms_container_port
-  health_check_path   = var.cms_health_check_path
+  cms_image         = var.cms_image
+  container_port    = var.cms_container_port
+  health_check_path = var.cms_health_check_path
   min_instances     = var.cms_min_instances
   max_instances     = var.cms_max_instances
 
   depends_on = [
     google_project_service.apis,
     module.firebase_storage,
-  ]
-}
-
-# Cuenta de servicio para GitHub Actions (Artifact Registry + Cloud Run deploy)
-module "ci_deployer" {
-  source = "./modules/ci-deployer"
-
-  gcp_project_id                    = var.gcp_project_id
-  cms_runtime_service_account_email = module.cloud_run.service_account_email
-
-  depends_on = [
-    google_project_service.apis,
-    module.cloud_run,
   ]
 }
 
@@ -78,6 +65,39 @@ module "firebase_hosting" {
   suffix              = var.suffix
 
   depends_on = [google_project_service.apis]
+}
+
+# Cloud Run: frontend Astro SSR (imagen y env las gestiona dp-proj-00-03-front CI/CD)
+module "cloud_run_front" {
+  source = "./modules/cloud-run-front"
+
+  gcp_project_id    = var.gcp_project_id
+  gcp_region        = var.gcp_region
+  front_image       = var.front_image
+  container_port    = var.front_container_port
+  health_check_path = var.front_health_check_path
+  min_instances     = var.front_min_instances
+  max_instances     = var.front_max_instances
+
+  depends_on = [
+    google_project_service.apis,
+    module.firebase_hosting,
+  ]
+}
+
+# Cuenta de servicio para GitHub Actions (Artifact Registry + Cloud Run deploy)
+module "ci_deployer" {
+  source = "./modules/ci-deployer"
+
+  gcp_project_id                      = var.gcp_project_id
+  cms_runtime_service_account_email   = module.cloud_run.service_account_email
+  front_runtime_service_account_email = module.cloud_run_front.service_account_email
+
+  depends_on = [
+    google_project_service.apis,
+    module.cloud_run,
+    module.cloud_run_front,
+  ]
 }
 
 # Modulo: Monitoreo y alertas

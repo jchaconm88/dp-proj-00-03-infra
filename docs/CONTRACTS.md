@@ -13,6 +13,10 @@ Tras `terraform apply`, configurar en **GitHub Secrets** del repo back (ver `dp-
 | `cms_url` | `PAYLOAD_PUBLIC_SERVER_URL` | URL pública CMS |
 | `storage_bucket` | `FIREBASE_STORAGE_BUCKET` | Media |
 | `gcp_project_id` | `GCP_PROJECT_ID`, `FIREBASE_PROJECT_ID` | GCP / Firebase |
+| `firebase_hosting_site` | `FIREBASE_HOSTING_SITE` (repo front) | ID sitio Hosting (`dp-proj-00-03-{suffix}-front`) |
+| `firebase_hosting_url` | `FRONTEND_WEBHOOK_URL` (back, base) | `https://{firebase_hosting_site}.web.app` |
+| `front_cloud_run_service_name` | (firebase.json `run.serviceId`) | `dp-proj-00-03-front` |
+| `gcp_region` | `GCP_REGION` (front + back + infra) | ej. `us-central1` |
 | `ci_deployer_service_account_email` | (manual) clave JSON → `GCP_SA_KEY` | SA creada por Terraform; clave JSON en consola/gcloud |
 
 `PAYLOAD_SECRET` y demás claves de terceros se generan/configuran manualmente en GitHub (no en GCP Secret Manager).

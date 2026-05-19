@@ -78,9 +78,9 @@ resource "google_logging_metric" "db_connection_failure" {
   filter  = "resource.type=\"cloud_run_revision\" AND jsonPayload.severity=\"CRITICAL\" AND jsonPayload.event=\"db_connection_failure\""
 
   metric_descriptor {
-    metric_kind = "DELTA"
-    value_type  = "INT64"
-    unit        = "1"
+    metric_kind  = "DELTA"
+    value_type   = "INT64"
+    unit         = "1"
     display_name = "DB Connection Failures"
   }
 }

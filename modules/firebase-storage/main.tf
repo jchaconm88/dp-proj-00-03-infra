@@ -21,7 +21,7 @@ resource "google_storage_bucket" "main" {
       type = "Delete"
     }
     condition {
-      age = 365 # Eliminar archivos temporales/fallidos despues de 1 año
+      age            = 365 # Eliminar archivos temporales/fallidos despues de 1 año
       matches_prefix = ["temp/"]
     }
   }

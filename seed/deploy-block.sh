@@ -67,6 +67,15 @@ else
   CMS_HEALTH_PATH="${CMS_HEALTH_PATH:-/api/health}"
 fi
 
+FRONT_IMAGE="${FRONT_IMAGE:-us-docker.pkg.dev/cloudrun/container/hello}"
+if [[ "$FRONT_IMAGE" == *"cloudrun/container/hello"* ]]; then
+  FRONT_CONTAINER_PORT=8080
+  FRONT_HEALTH_PATH=/
+else
+  FRONT_CONTAINER_PORT=8080
+  FRONT_HEALTH_PATH=/api/health
+fi
+
 terraform plan \
   -var="suffix=${SUFFIX}" \
   -var="gcp_project_id=${GCP_PROJECT_ID}" \
@@ -77,6 +86,9 @@ terraform plan \
   -var="cms_image=${CMS_IMAGE}" \
   -var="cms_container_port=${CMS_CONTAINER_PORT}" \
   -var="cms_health_check_path=${CMS_HEALTH_PATH}" \
+  -var="front_image=${FRONT_IMAGE}" \
+  -var="front_container_port=${FRONT_CONTAINER_PORT}" \
+  -var="front_health_check_path=${FRONT_HEALTH_PATH}" \
   -out="${SUFFIX}.tfplan"
 
 read -r -p "¿Aplicar plataforma para sufijo ${SUFFIX}? (escribe 'si'): " confirm
@@ -93,7 +105,11 @@ echo "  GCP_SA_KEY: cuenta $(terraform output -raw ci_deployer_service_account_e
 echo "    -> IAM > esa cuenta > Claves > Agregar clave JSON (no la genera Terraform)"
 echo "  DATABASE_URL:         terraform output -raw neon_database_connection_string"
 echo "  DATABASE_URL_MIGRATE: terraform output -raw neon_database_owner_connection_string"
-echo "Luego push a main en dp-proj-00-03-back (migraciones + deploy Cloud Run)."
+echo "Repo front (dp-proj-00-03-front): ver .github/SECRETS.md"
+echo "  FIREBASE_HOSTING_SITE=$(terraform output -raw firebase_hosting_site 2>/dev/null || echo '?')"
+echo "  GCP_REGION=${GCP_REGION}"
+echo "  FRONTEND_WEBHOOK_URL (back)=https://$(terraform output -raw firebase_hosting_site 2>/dev/null).web.app/api/webhooks/rebuild"
+echo "Luego push a main: back (migraciones + CMS), front (Cloud Run SSR + Hosting)."
 echo ""
 echo "Bloque ${SUFFIX} listo."
 echo "  CMS URL: $(terraform output -raw cms_url 2>/dev/null || echo 'ver terraform output')"
