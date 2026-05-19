@@ -87,15 +87,13 @@ fi
 
 terraform apply "${SUFFIX}.tfplan"
 
-OWNER_DATABASE_URL="$(terraform output -raw neon_database_owner_connection_string 2>/dev/null || true)"
-if [[ -n "$OWNER_DATABASE_URL" ]]; then
-  bash "$SCRIPT_DIR/scripts/setup-database.sh" \
-    --owner-url "$OWNER_DATABASE_URL" \
-    --back-dir "$(dirname "$ROOT_DIR")/dp-proj-00-03-back"
-else
-  echo "ADVERTENCIA: Sin neon_database_owner_connection_string; omitiendo migraciones y RLS."
-fi
-
+echo ""
+echo "Configura los secretos en GitHub (repo back): ver dp-proj-00-03-back/.github/SECRETS.md"
+echo "  GCP_SA_KEY: cuenta $(terraform output -raw ci_deployer_service_account_email 2>/dev/null || echo 'ci_deployer')"
+echo "    -> IAM > esa cuenta > Claves > Agregar clave JSON (no la genera Terraform)"
+echo "  DATABASE_URL:         terraform output -raw neon_database_connection_string"
+echo "  DATABASE_URL_MIGRATE: terraform output -raw neon_database_owner_connection_string"
+echo "Luego push a main en dp-proj-00-03-back (migraciones + deploy Cloud Run)."
 echo ""
 echo "Bloque ${SUFFIX} listo."
 echo "  CMS URL: $(terraform output -raw cms_url 2>/dev/null || echo 'ver terraform output')"

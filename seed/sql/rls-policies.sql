@@ -3,8 +3,14 @@
 -- Requisito 1.4, 9.2: datos de cada tenant aislados logicamente
 -- =============================================================================
 
+-- Migracion uuid → integer: CREATE OR REPLACE no cambia el tipo de retorno
+DROP FUNCTION IF EXISTS current_tenant_id() CASCADE;
+DROP FUNCTION IF EXISTS set_current_tenant(integer) CASCADE;
+DROP FUNCTION IF EXISTS set_current_tenant(uuid) CASCADE;
+
 -- Funcion helper: establece el tenant actual en la sesion de BD
-CREATE OR REPLACE FUNCTION set_current_tenant(p_tenant_id uuid)
+-- Payload usa tenants.id serial (integer), no UUID
+CREATE OR REPLACE FUNCTION set_current_tenant(p_tenant_id integer)
 RETURNS void AS $$
 BEGIN
   PERFORM set_config('app.current_tenant_id', p_tenant_id::text, true);
@@ -13,9 +19,9 @@ $$ LANGUAGE plpgsql;
 
 -- Funcion helper: obtiene el tenant actual de la sesion
 CREATE OR REPLACE FUNCTION current_tenant_id()
-RETURNS uuid AS $$
+RETURNS integer AS $$
 BEGIN
-  RETURN current_setting('app.current_tenant_id', true)::uuid;
+  RETURN NULLIF(current_setting('app.current_tenant_id', true), '')::integer;
 EXCEPTION
   WHEN others THEN
     RETURN NULL;
@@ -32,15 +38,13 @@ DECLARE
   tables_with_tenant text[] := ARRAY[
     'domains',
     'pages',
-    'page_translations',
     'posts',
-    'post_translations',
     'menus',
-    'menu_items',
     'media',
     'contact_submissions',
     'tenant_languages',
-    'user_roles'
+    'html_templates',
+    'products'
   ];
 BEGIN
   FOREACH t IN ARRAY tables_with_tenant LOOP

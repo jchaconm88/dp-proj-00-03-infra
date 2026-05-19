@@ -5,13 +5,13 @@ resource "google_project_service" "apis" {
     "firebase.googleapis.com",
     "firebasehosting.googleapis.com",
     "storage.googleapis.com",
-    "secretmanager.googleapis.com",
     "monitoring.googleapis.com",
     "logging.googleapis.com",
     "cloudbilling.googleapis.com",
     "cloudscheduler.googleapis.com",
     "artifactregistry.googleapis.com",
     "billingbudgets.googleapis.com",
+    "iam.googleapis.com",
   ])
 
   project            = var.gcp_project_id
@@ -26,17 +26,6 @@ module "neon_database" {
   org_id       = var.neon_org_id
   project_name = local.neon_project_name
   region       = "aws-us-east-1" # Neon usa regiones AWS internamente
-}
-
-# Modulo: Secret Manager
-module "secrets" {
-  source = "./modules/secrets"
-
-  gcp_project_id   = var.gcp_project_id
-  database_url     = module.neon_database.connection_string
-  neon_api_key     = var.neon_api_key
-
-  depends_on = [google_project_service.apis]
 }
 
 # Modulo: Firebase Storage (bucket compartido)
@@ -58,16 +47,25 @@ module "cloud_run" {
   cms_image           = var.cms_image
   container_port      = var.cms_container_port
   health_check_path   = var.cms_health_check_path
-  min_instances       = var.cms_min_instances
+  min_instances     = var.cms_min_instances
   max_instances     = var.cms_max_instances
-  database_url_secret = module.secrets.database_url_secret_id
-  payload_secret_key_secret = module.secrets.payload_secret_key_secret_id
-  storage_bucket    = module.firebase_storage.bucket_name
 
   depends_on = [
     google_project_service.apis,
-    module.secrets,
     module.firebase_storage,
+  ]
+}
+
+# Cuenta de servicio para GitHub Actions (Artifact Registry + Cloud Run deploy)
+module "ci_deployer" {
+  source = "./modules/ci-deployer"
+
+  gcp_project_id                    = var.gcp_project_id
+  cms_runtime_service_account_email = module.cloud_run.service_account_email
+
+  depends_on = [
+    google_project_service.apis,
+    module.cloud_run,
   ]
 }
 

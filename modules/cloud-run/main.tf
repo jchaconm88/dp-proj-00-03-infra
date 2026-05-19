@@ -5,13 +5,6 @@ resource "google_service_account" "cms" {
   project      = var.gcp_project_id
 }
 
-# Permisos del service account del CMS
-resource "google_project_iam_member" "cms_secret_accessor" {
-  project = var.gcp_project_id
-  role    = "roles/secretmanager.secretAccessor"
-  member  = "serviceAccount:${google_service_account.cms.email}"
-}
-
 resource "google_project_iam_member" "cms_storage_admin" {
   project = var.gcp_project_id
   role    = "roles/storage.objectAdmin"
@@ -24,7 +17,7 @@ resource "google_project_iam_member" "cms_log_writer" {
   member  = "serviceAccount:${google_service_account.cms.email}"
 }
 
-# Servicio Cloud Run del CMS
+# Servicio Cloud Run del CMS (imagen y variables de entorno las gestiona dp-proj-00-03-back CI/CD)
 resource "google_cloud_run_v2_service" "cms" {
   name     = "dp-proj-00-03-cms"
   location = var.gcp_region
@@ -49,43 +42,10 @@ resource "google_cloud_run_v2_service" "cms" {
         startup_cpu_boost = true # Reduce cold start time
       }
 
-      # Secrets como variables de entorno
-      env {
-        name = "DATABASE_URL"
-        value_source {
-          secret_key_ref {
-            secret  = var.database_url_secret
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name = "PAYLOAD_SECRET"
-        value_source {
-          secret_key_ref {
-            secret  = var.payload_secret_key_secret
-            version = "latest"
-          }
-        }
-      }
-
-      env {
-        name  = "FIREBASE_STORAGE_BUCKET"
-        value = var.storage_bucket
-      }
-
-      env {
-        name  = "NODE_ENV"
-        value = "production"
-      }
-
-      # PORT lo asigna Cloud Run segun container_port; no se puede definir manualmente
       ports {
         container_port = var.container_port
       }
 
-      # Health check para warm-up y liveness
       liveness_probe {
         http_get {
           path = var.health_check_path
@@ -97,14 +57,14 @@ resource "google_cloud_run_v2_service" "cms" {
         timeout_seconds       = 5
       }
 
+      # TCP: Next/Payload pueden tardar >60s en cold start; HTTP /api/health fallaba el deploy.
       startup_probe {
-        http_get {
-          path = var.health_check_path
+        tcp_socket {
           port = var.container_port
         }
-        initial_delay_seconds = 5
-        period_seconds        = 5
-        failure_threshold     = 12 # 60s max para cold start (req: 10s)
+        initial_delay_seconds = 0
+        period_seconds        = 10
+        failure_threshold     = 30
         timeout_seconds       = 5
       }
     }
@@ -120,13 +80,12 @@ resource "google_cloud_run_v2_service" "cms" {
 
   lifecycle {
     ignore_changes = [
-      # La imagen se actualiza via CI/CD de dp-proj-00-03-back
       template[0].containers[0].image,
+      template[0].containers[0].env,
     ]
   }
 }
 
-# Permitir invocaciones publicas al CMS (los endpoints publicos estan protegidos por la app)
 resource "google_cloud_run_v2_service_iam_member" "public" {
   project  = var.gcp_project_id
   location = var.gcp_region
@@ -135,7 +94,6 @@ resource "google_cloud_run_v2_service_iam_member" "public" {
   member   = "allUsers"
 }
 
-# Artifact Registry para imagenes del CMS
 resource "google_artifact_registry_repository" "cms" {
   location      = var.gcp_region
   repository_id = "dp-proj-00-03-cms"

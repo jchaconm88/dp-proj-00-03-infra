@@ -37,21 +37,6 @@ variable "max_instances" {
   default     = 10
 }
 
-variable "database_url_secret" {
-  description = "ID del secreto de Secret Manager para DATABASE_URL"
-  type        = string
-}
-
-variable "payload_secret_key_secret" {
-  description = "ID del secreto de Secret Manager para PAYLOAD_SECRET_KEY"
-  type        = string
-}
-
-variable "storage_bucket" {
-  description = "Nombre del bucket de Firebase Storage"
-  type        = string
-}
-
 variable "memory_limit" {
   description = "Limite de memoria por instancia"
   type        = string

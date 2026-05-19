@@ -1,5 +1,5 @@
 -- Permisos del rol de aplicación (app_user) tras migraciones de Payload.
--- Ejecutar con el rol owner de Neon (invocado por seed/scripts/setup-database.sh).
+-- Copia histórica; canónico: dp-proj-00-03-back/scripts/db/grant-app-user.sql
 
 GRANT USAGE ON SCHEMA public TO app_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;

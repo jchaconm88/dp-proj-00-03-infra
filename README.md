@@ -9,7 +9,6 @@ Este repositorio contiene todas las definiciones de infraestructura Terraform de
 - **Firebase Hosting** — Frontend Astro SSG/SSR (sitio único multi-dominio)
 - **Firebase Storage** — Bucket compartido con aislamiento por tenant
 - **Neon PostgreSQL** — Base de datos compartida con Row Level Security
-- **Secret Manager** — Gestión de secretos y credenciales
 - **Cloud Monitoring** — Alertas, logging y monitoreo
 
 ## Dependencias externas
@@ -24,10 +23,10 @@ Este repositorio contiene todas las definiciones de infraestructura Terraform de
 ```
 modules/
 ├── cloud-run/          # Cloud Run service para Payload CMS
+├── ci-deployer/        # SA GitHub Actions (deploy); clave JSON manual
 ├── firebase-hosting/   # Firebase Hosting (sitio único multi-dominio)
 ├── firebase-storage/   # Firebase Storage bucket compartido
 ├── neon-database/      # PostgreSQL en Neon con RLS
-├── secrets/            # Google Secret Manager
 ├── monitoring/         # Cloud Logging y alertas
 └── networking/         # Dominios personalizados y SSL
 seed/
@@ -81,4 +80,4 @@ terraform plan -var-file="environments/block.tfvars" -var="gcp_project_id=dp-pro
 ## Variables requeridas
 
 Ver `variables.tf` para la lista completa. Las variables sensibles se gestionan
-vía GitHub Secrets y Google Secret Manager.
+vía GitHub Secrets (repo back para runtime CMS; ver `dp-proj-00-03-back/.github/SECRETS.md`).

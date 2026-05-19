@@ -44,3 +44,13 @@ output "neon_database_owner_connection_string" {
   value       = module.neon_database.owner_connection_string
   sensitive   = true
 }
+
+output "ci_deployer_service_account_email" {
+  description = "SA para GitHub Actions; crear clave JSON manual -> secret GCP_SA_KEY"
+  value       = module.ci_deployer.service_account_email
+}
+
+output "artifact_registry_repository" {
+  description = "Ruta del repositorio Docker del CMS en Artifact Registry"
+  value       = module.cloud_run.artifact_registry_repository
+}

@@ -29,5 +29,4 @@ resource "neon_role" "app" {
   name       = var.role_name
 }
 
-# Tablas Payload: seed/scripts/setup-database.sh (migrate + grants + RLS)
-# tras terraform apply en seed/deploy-block.sh
+# Schema Payload, grants y RLS: pipeline CI de dp-proj-00-03-back (db:migrate + db:post-migrate)
