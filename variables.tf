@@ -122,3 +122,15 @@ variable "storage_location" {
   type        = string
   default     = "US"
 }
+
+variable "enable_publish_scheduler" {
+  description = "Job Cloud Scheduler para publicar contenido programado (desactivar si no se usa)"
+  type        = bool
+  default     = false
+}
+
+variable "publish_scheduled_cron" {
+  description = "Cron de publicación programada. Default cada 5 min (tolerancia requisito <= 5 min)"
+  type        = string
+  default     = "*/5 * * * *"
+}

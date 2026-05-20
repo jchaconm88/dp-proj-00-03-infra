@@ -14,3 +14,6 @@ front_container_port        = 8080
 front_health_check_path     = "/api/health"
 front_min_instances         = 0
 front_max_instances         = 10
+# Publicación programada (desactivado por defecto; ver banner en CMS al habilitar)
+enable_publish_scheduler    = false
+publish_scheduled_cron      = "*/5 * * * *"

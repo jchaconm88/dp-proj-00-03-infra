@@ -116,10 +116,12 @@ module "monitoring" {
   ]
 }
 
-# Cloud Scheduler: publicacion programada de contenido (cada minuto)
+# Cloud Scheduler: publicacion programada (default cada 5 min; antes cada minuto ~43k req/mes al CMS)
 resource "google_cloud_scheduler_job" "publish_scheduled_content" {
+  count = var.enable_publish_scheduler ? 1 : 0
+
   name      = "dp-proj-00-03-publish-scheduled"
-  schedule  = "* * * * *"
+  schedule  = var.publish_scheduled_cron
   time_zone = "UTC"
   region    = var.gcp_region
 

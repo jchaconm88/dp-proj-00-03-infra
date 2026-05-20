@@ -10,6 +10,7 @@ Este repositorio contiene todas las definiciones de infraestructura Terraform de
 - **Firebase Storage** — Bucket compartido con aislamiento por tenant
 - **Neon PostgreSQL** — Base de datos compartida con Row Level Security
 - **Cloud Monitoring** — Alertas, logging y monitoreo
+- **Cloud Scheduler** — Publicación programada (**desactivado por defecto**; `enable_publish_scheduler`)
 
 ## Dependencias externas
 
