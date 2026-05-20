@@ -27,7 +27,7 @@ variable "health_check_path" {
 
 variable "min_instances" {
   type    = number
-  default = 0
+  default = 1
 }
 
 variable "max_instances" {
