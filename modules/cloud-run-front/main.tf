@@ -31,6 +31,7 @@ resource "google_cloud_run_v2_service" "front" {
           memory = var.memory_limit
           cpu    = var.cpu_limit
         }
+        cpu_idle          = true
         startup_cpu_boost = true
       }
 

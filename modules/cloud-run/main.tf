@@ -39,7 +39,8 @@ resource "google_cloud_run_v2_service" "cms" {
           memory = var.memory_limit
           cpu    = var.cpu_limit
         }
-        startup_cpu_boost = true # Reduce cold start time
+        cpu_idle          = true # Request-based billing (solo CPU/memoria en peticiones)
+        startup_cpu_boost = true
       }
 
       ports {
