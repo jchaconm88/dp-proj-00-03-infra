@@ -26,8 +26,9 @@ variable "health_check_path" {
 }
 
 variable "min_instances" {
-  type    = number
-  default = 1
+  description = "Instancias minimas (0 para escalado a cero)"
+  type        = number
+  default     = 0
 }
 
 variable "max_instances" {
