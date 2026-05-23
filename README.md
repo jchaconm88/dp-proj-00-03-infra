@@ -42,7 +42,12 @@ seed/
 ### Pre-requisitos
 
 - Terraform >= 1.6
-- Google Cloud SDK autenticado (`gcloud auth application-default login`)
+- Google Cloud SDK autenticado:
+
+```bash
+gcloud auth login
+gcloud auth application-default login
+```
 - Firebase CLI (`npm install -g firebase-tools`)
 - Cuenta Neon con API key
 
@@ -52,6 +57,8 @@ seed/
 2. Vincular facturación y obtener el `BILLING_ACCOUNT_ID`.
 
 ```bash
+gcloud auth login
+gcloud auth application-default login
 cp seed/.env.example seed/.env
 # Editar seed/.env (SEED_GCP_PROJECT_ID, BILLING_ACCOUNT_ID, etc.)
 bash seed/deploy.sh
